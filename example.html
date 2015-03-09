@@ -1,0 +1,95 @@
+<?doctype html>
+<html ng-app="myApp">
+<head>
+    <link rel="stylesheet" href="node_modules/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="build/ngWidgets.min.css" />
+</head>
+
+
+<body>
+
+<h1>ngWidgets examples</h1>
+
+<section ng-init="lignum = lignum3">
+    <h2>ngwRepeat</h2>
+    <div>
+        <button ng-click="lignum = lignum1">Lignum1</button>
+        <button ng-click="lignum = lignum2">Lignum2</button>
+        <button ng-click="lignum = lignum3">Lignum3</button>
+    </div>
+    <p>Selected node is: {{lignum.$selected}}</p>
+    <table class="table table-tree">
+        <tr>
+            <th></th>
+            <th></th>
+            <th>$label</th>
+            <th>$parent</th>
+            <th>$isRoot</th>
+            <th>$level</th>
+            <th>$path</th>
+            <th>$isFolder</th>
+            <th>$isOpen</th>
+            <th>$isSelected</th>
+        </tr>
+        <tr ngw:repeat="node in lignum" children="natus" label="nomen">
+            <th class="clickable"><span ng-if="node.$isFolder" ng-click="node.$toggle()">$toggle()</span></th>
+            <th class="clickable" ng-click="node.$select()">$select()</th>
+            <td ng-class="node.$class">{{node.$label}}</td>
+            <td>{{node.$parent.$label}}</td>
+            <td>{{node.$isRoot}}</td>
+            <td>{{node.$level}}</td>
+            <td><span ng-repeat="p in node.$path">/{{p.$label}}</span></td>
+            <td>{{node.$isFolder}}</td>
+            <td>{{node.$isOpen}}</td>
+            <td>{{node.$isSelected}}</td>
+        </tr>
+    </table>
+    <div>
+        <button ng-click="lignum.$expand()">lignum.$expand()</button>
+        <button ng-click="lignum.$collapse()">lignum.$collapse()</button>
+        <!-- TODO <label>node.$highlight()</label><input ng-model="lignum.search">-->
+    </div>
+</section>
+
+<hr>
+
+
+<section ng-init="arbor = arbor3">
+    <h2>ngwTableTree</h2>
+    <div>
+        <button ng-click="arbor = arbor1">Arbor1</button>
+        <button ng-click="arbor = arbor2">Arbor2</button>
+        <button ng-click="arbor = arbor3">Arbor3</button>
+    </div>
+    <ngw:table-tree model="arbor" label="nomen" children="natus" headers="caput" data="arca"></ngw:table-tree>
+    <p>Selected node is: {{arbor.$selected}}</p>
+    <div>
+        <button ng-click="arbor.$expand()">arbor.$expand()</button>
+        <button ng-click="arbor.$collapse()">arbor.$collapse()</button>
+    </div>
+</section>
+
+<hr>
+
+
+<section ng-init="bratus = bratus3">
+    <h2>ngwTree</h2>
+    <div>
+        <button ng-click="bratus = bratus1">Bratus1</button>
+        <button ng-click="bratus = bratus2">Bratus2</button>
+        <button ng-click="bratus = bratus3">Bratus3</button>
+    </div>
+    <ngw:tree model="bratus" children="natus" label="nomen"></ngw:tree>
+    <p>Selected node is: {{bratus.$selected}}</p>
+    <div>
+        <button ng-click="bratus.$expand()">bratus.$expand()</button>
+        <button ng-click="bratus.$collapse()">bratus.$collapse()</button>
+    </div>
+</section>
+
+
+<script src="node_modules/angular/angular.min.js"></script>
+<script src="build/ngWidgets.min.js"></script>
+<script src="example.js"></script>
+</body>
+</html>
