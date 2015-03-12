@@ -2,53 +2,81 @@
     'use strict';
 
     var ngWidgets = angular.module('ngWidgets', []),
+
+        highlight = function (text, emphasis, caseSensitive) {
+            var result = text;
+            if (text && (emphasis || angular.isNumber(emphasis))) {
+                text = text.toString();
+                emphasis = emphasis.toString();
+                if (caseSensitive) {
+                    result = text.split(emphasis).join('<span class="emphasis">' + emphasis + '</span>');
+                } else {
+                    result = text.replace(new RegExp(emphasis, 'gi'), '<span class="emphasis">$&</span>');
+                }
+            }
+            return result;
+        },
+
         traverse = function (model, childrenProp, visitFn) {
-            var nodes = model[childrenProp],
-                stack = [],
-                node,
-                children,
-                child,
-                k = 0;
+            var nodes, stack, root, node, children, child, k,
+                childrenOf = function (node) {
+                    if (node.hasOwnProperty(childrenProp)) {
+                        return node[childrenProp];
+                    }
+                };
+            nodes = childrenOf(model);
             if (nodes) {
-                stack.push(nodes[0]);
-                while (stack.length > 0) {
-                    node = stack.pop();
-                    visitFn(node);
-                    children = node[childrenProp];
-                    if (children) {
-                        for (k = children.length - 1; k >= 0; k -= 1) {
-                            child = children[k];
-                            // it pimps the children with their parent reference
-                            child.$parent = node;
-                            stack.push(child);
+                root = nodes[0];
+                if (root) {
+                    stack = [];
+                    stack.push(root);
+                    while (stack.length > 0) {
+                        node = stack.pop();
+                        visitFn(node);
+                        children = childrenOf(node);
+                        if (children) {
+                            for (k = children.length - 1; k >= 0; k -= 1) {
+                                child = children[k];
+                                // it pimps the children with their parent reference
+                                child.$parent = node;
+                                stack.push(child);
+                            }
                         }
                     }
                 }
             }
         },
-        pimp = function (model, node, childrenProp, labelProp) {
+
+        pimp = function (model, node, childrenProp, dataProp) {
             model.$collapse = function () {
-                traverse(model, childrenProp, function (n) {
-                    n.$isOpen = false;
+                traverse(model, childrenProp, function (node) {
+                    delete node.$isOpen;
                 });
             };
 
             model.$expand = function () {
-                traverse(model, childrenProp, function (n) {
-                    n.$isOpen = true;
+                traverse(model, childrenProp, function (node) {
+                    if (node.$isFolder) {
+                        node.$isOpen = true;
+                    }
                 });
             };
 
-            node.$isLeaf = function () {
-                return !this.$isFolder;
-            };
-
-            node.$isFolderOpen = function () {
-                return this.$isFolder && this.$isOpen;
-            };
-
-            node.$isFolderClose = function () {
-                return this.$isFolder && !this.$isOpen;
+            node.$label = function (emphasis) {
+                if (node.hasOwnProperty(dataProp)) {
+                    var data = this[dataProp], text;
+                    if (angular.isArray(data)) {
+                        data = data[0];
+                    }
+                    text = data; // TODO render(data);
+                    text = highlight(text, emphasis, true);
+                    if (text !== data) {
+                        this.$isHighlighted = true;
+                    } else {
+                        delete this.$isHighlighted;
+                    }
+                    return text;
+                }
             };
 
             node.$toggle = function () {
@@ -63,8 +91,8 @@
 
             node.$isVisible = function () {
                 var boolean = true;
-                angular.forEach(this.$path.slice(0, -1), function (p) {
-                    boolean = boolean && p.$isFolderOpen();
+                angular.forEach(this.$path.slice(0, -1), function (node) {
+                    boolean = boolean && node.$isFolder && node.$isOpen;
                 });
                 return boolean;
             };
@@ -73,25 +101,25 @@
                 if (model.$selected) {
                     delete model.$selected.$isSelected;
                 }
-                node.$isSelected = true;
-                model.$selected = node;
+                this.$isSelected = true;
+                model.$selected = this;
             };
 
             (function (node) {
                 node.$isRoot = (node.$parent === undefined);
                 node.$children = node[childrenProp] || [];
-                node.$label = node[labelProp] || '?';
+                // DO NOT node.$label = node[dataProp];
                 var level = 0,
                     path = [node],
                     n = node;
-                while (n.$parent) {
+                while (!n.$isRoot) {
                     level += 1;
                     n = n.$parent;
                     path.push(n);
                 }
                 node.$path = path.reverse();
                 node.$level = level;
-                node.$isFolder = node.$children.length > 0;
+                node.$isFolder = node.$children && node.$children.length > 0;
                 if (node.$isFolder) { node.$isOpen = true; }
 
             }(node));
@@ -100,186 +128,153 @@
         };
 
 
-    ngWidgets.directive('ngwRepeat', ['$compile', function ngwRepeatFactory($compile) {
-        var ngwRepeatDefinition = {
+    ngWidgets.directive('ngwRepeat', ['$compile', function ($compile) {
+        return {
             restrict: 'A',
             priority: 1000,
             terminal: true,
             transclude: 'element',
-            compile: function ngwRepeatCompile(tElement, tAttrs) {
-                var expression = tAttrs.ngwRepeat,
-                    match = expression.match(/([\w]+)\s+(in)\s+(([\w]+)(\.[\w]+)*)/),
-                    nodeProp = match[1],
-                    modelProp = match[3],
-                    labelProp = tAttrs.label || 'label',
-                    childrenProp = tAttrs.children || 'children',
-                    clones = [];
+            scope: false,
+            compile: function (tElement, tAttrs) {
+                var nodeProp, modelProp, dataProp, childrenProp, clones,
+                    expression = tAttrs.ngwRepeat,
+                    match = expression.match(/([\w]+)\s+(in)\s+(([\w]+)(\.[\w]+)*)/);
 
                 if (!match) {
                     throw 'invalid expression "' + expression + '"';
                 }
+                nodeProp = match[1];
+                modelProp = match[3];
+                dataProp = tAttrs.data || 'data';
+                childrenProp = tAttrs.children || 'children';
+                clones = [];
 
-                return function ngwRepeatPostLink(scope, iElement, iAttrs, controller, transcludeFn) {
+                // return postLink function
+                return function (scope, iElement, iAttrs, controller, transcludeFn) {
+                    scope.$watch(
+                        function (scope) {
+                            return scope[modelProp];
+                        },
+                        function (newModel) {
+                            if (newModel) {
+                                // (1) hold the new model
+                                scope.model = newModel;
 
-                    var pimpAndTransclude = function (node) {
-                        // pimp the node to enrich it with more properties
-                        pimp(scope[modelProp], node, childrenProp, labelProp);
+                                // (2) dispose previous transcluded clones and their scopes
+                                var clone;
+                                while (clones.length > 0) {
+                                    clone = clones.pop();
+                                    clone.scope().$destroy();
+                                    clone.remove();
+                                }
 
-                        // link the transcluded content to the right scope
-                        transcludeFn(function ngwRepeatTranscludeLink(clone, scope) {
-                            // save clone for later disposal
-                            clones.push(clone);
-                            // put node in scope
-                            scope[nodeProp] = node;
-                            // watch for some of their properties
-                            scope.$watch('node.$isVisible()', function (visible) {
-                                if (!visible) { clone.addClass('hidden'); } else { clone.removeClass('hidden'); }
-                            });
-                            scope.$watch('node.$isSelected', function (selected) {
-                                if (selected) { clone.addClass('selected'); } else { clone.removeClass('selected'); }
-                            });
-                            // finally append it to the DOM
-                            iElement.parent().append(clone);
-                        });
-                    };
+                                // (3) traverse the hierarchical model to pimp and transclude nodes
+                                traverse(scope.model, childrenProp, function (node) {
+                                    // pimp the node to enrich it with more properties
+                                    pimp(scope.model, node, childrenProp, dataProp);
 
-                    scope.$watch(modelProp + '.' + childrenProp, function ngwRepeatAction(newNodes) {
-                        if (newNodes) {
-                            // (1) dispose previous transcluded clones and their scopes
-                            var clone;
-                            while (clones.length > 0) {
-                                clone = clones.pop();
-                                clone.scope().$destroy();
-                                clone.remove();
+                                    // link the transcluded content to the right scope
+                                    transcludeFn(function ngwRepeatTranscludeLink(clone, scope) {
+
+                                        // save the clone element for later disposal
+                                        clones.push(clone);
+
+                                        // put current node in cloned scope
+                                        scope[nodeProp] = node;
+
+                                        // watch for some of their properties
+                                        scope.$watch(nodeProp + '.$isVisible()', function (visible) {
+                                            if (!visible) { clone.addClass('hidden'); } else { clone.removeClass('hidden'); }
+                                        });
+
+                                        scope.$watch(nodeProp + '.$isSelected', function (selected) {
+                                            if (selected) { clone.addClass('selected'); } else { clone.removeClass('selected'); }
+                                        });
+
+                                        // finally append the cloned element to the DOM
+                                        iElement.parent().append(clone);
+                                    });
+                                });
                             }
-                            // (2) traverse the hierarchical model to pimp and transclude nodes
-                            traverse(scope[modelProp], childrenProp, pimpAndTransclude);
                         }
-                    });
+                    );
                 };
             }
         };
-        return ngwRepeatDefinition;
     }]);
 
 
 
 
     ngWidgets.directive('ngwTableTree', ['$compile', function ($compile) {
-        var ngwTableTreeDefinition = {
-            restrict: 'EA',
-            scope: false,
-            compile: function ngwTableTreeCompile(tElement, tAttrs, transcludeFn) {
-
-                return function ngwTableTreePostLink(scope, iElement, iAttrs, controller, transcludeFn) {
-                    if (iAttrs.model) {
-                        scope.modelProp = iAttrs.model;
-                    } else {
-                        throw 'model attribute is missing';
-                    }
-                    scope.childrenProp = iAttrs.children || 'children';
-                    scope.labelProp = iAttrs.label || 'label';
-                    scope.headersProp = iAttrs.headers || 'headers';
-                    scope.headers = scope.$eval(scope.modelProp + '.' + scope.headersProp) || [];
-                    scope.dataProp = iAttrs.data || 'data';
-                    scope.diffProp = iAttrs.diff || 'diff';
-
-                    var template =
-                        '<table class="table table-tree">' +
-                        '<thead>' +
-                        '  <th>' + scope.labelProp + '</th>';
-
-                    angular.forEach(scope.headers, function (header) {
-                        template +=
-                            '  <th>' + header + '</th>';
-                    });
-
-                    template +=
-                        '</thead>' +
-                        '<tbody>';
-
-                    template +=
-                        '  <tr ngw:repeat="node in ' + scope.modelProp + '" children="' + scope.childrenProp + '">' +
-                        '    <td ng-class="\'level\'+node.$level">' +
-                        '      <div class="branch">' +
-                        '        <icon ng-click="node.$toggle()" ng-class="{\'icon-leaf\': node.$isLeaf(), \'icon-folder-close\': node.$isFolderClose(), \'icon-folder-open\': node.$isFolderOpen()}"></icon>' +
-                        '        <span ng-click="node.$select()" class="clickable">{{node.' + scope.labelProp + '}}</span>' +
-                        '      </div>' +
-                        '    </td>';
-
-                    angular.forEach(scope.headers, function (header, index) {
-                        template +=
-                            '  <td>' +
-                            '    <span>{{node.' + scope.dataProp + '[' + index + ']}}</span>' +
-                            '  </td>';
-                    });
-
-                    template +=
-                        '  </tr>' +
-                        '</tbody>' +
-                        '</table>';
-
-                    iElement.html('').append($compile(template)(scope));
-                };
-            }
-        };
-        return ngwTableTreeDefinition;
-    }]);
-
-
-
-
-    ngWidgets.directive('ngwTree', ['$compile', function ($compile) {
-        var ngwTreeDefinition = {
+        return {
             restrict: 'EA',
             scope: {
                 model: '=',
-                childrenProp: '@children',
-                labelProp: '@label',
-                parent: '=',
-                recursee: '='
+                children: '@',
+                headersProp: '@headers',
+                data: '@',
+                highlight: '='
             },
-            compile: function ngwTableTreeCompile(tElement, tAttrs, transcludeFn) {
+            link: function (scope, iElement, iAttrs, controller, transcludeFn) {
+                if (!scope.model) {
+                    throw 'model not bound';
+                }
+                if (scope.children === undefined) {
+                    scope.children = 'children';
+                }
+                if (scope.headersProp === undefined) {
+                    scope.headersProp = 'headers';
+                }
+                if (scope.data === undefined) {
+                    scope.data = 'data';
+                }
+                scope.headers = scope.$eval('model.' + scope.headersProp) || [];
 
-                return function ngwTableTreePostLink(scope, iElement, iAttrs, controller, transcludeFn) {
-                    scope.$watch(function (scope) { return scope.model; }, function ngwRepeatAction(newNodes, oldNodes) {
+                var k,
+                    template = '<table class="table table-tree"><thead>';
 
-                        if (newNodes) {
-                            if (scope.recursee) {
-                                scope.nodes = scope.recursee;
-                            } else {
-                                // linking root node
-                                scope.nodes = scope.model[scope.childrenProp];
-                            }
+                for (k = 0; k < scope.headers.length; k = k + 1) {
+                    template += '<th>' + scope.headers[k] + '</th>';
+                }
 
-                            angular.forEach(scope.nodes, function (node) {
-                                node.$parent = scope.parent;
-                                pimp(scope.model, node, scope.childrenProp, scope.labelProp);
-                            });
+                template +=
+                    '</thead><tbody>';
+                template +=
+                    '  <tr ngw:repeat="node in model" children="' + scope.children + '" data="' + scope.data + '">' +
+                    '    <td ng-class="\'level\'+node.$level">' +
+                    '      <div class="branch">' +
+                    '        <icon ng-click="node.$toggle()" ng-class="{\'icon-leaf\': !node.$isFolder, \'icon-folder-close\': node.$isFolder && !node.$isOpen, \'icon-folder-open\': node.$isFolder && node.$isOpen}"></icon>' +
+                    '        <span ng-click="node.$select()" class="clickable" ng-bind-html="node.$label(highlight)"></span>' +
+                    '      </div>' +
+                    '    </td>';
+                for (k = 1; k < scope.headers.length; k = k + 1) {
+                    template +=
+                        '  <td>' +
+                        '    <span>{{node.' + scope.data + '[' + k + ']}}</span>' +
+                        '  </td>';
+                }
+                template +=
+                    '</tr></tbody></table>';
 
-                            var template =
-                                '<ul class="tree">' +
-                                '  <li ng-repeat="node in nodes" class="branch">' +
-                                    //'  <span>' +
-                                '      <icon ng-click="node.$toggle()" ng-class="{\'icon-leaf\': node.$isLeaf(), \'icon-folder-close\': node.$isFolderClose(), \'icon-folder-open\': node.$isFolderOpen()}"></icon>' +
-                                '      <span ng-click="node.$select()" class="clickable" ng-class="{selected: node.$isSelected}">{{node.' + scope.labelProp + '}}</span>' +
-                                    //'  </span>' +
-                                '    <div ng-if="node.$isFolder" ngw:tree model="model" parent="node" recursee="node.$children" label="' + scope.labelProp + '" children="' + scope.childrenProp + '" ng-show="node.$isOpen"></div>' +
-                                '  </li>' +
-                                '</ul>';
-
-                            if (scope.nodes) {
-                                // render template
-                                iElement.html('').append($compile(template)(scope));
-                            }
-                            // else
-                            //    stop recursion
-                        }
-                    });
-                };
+                iElement.html('').append($compile(template)(scope));
             }
         };
-        return ngwTreeDefinition;
     }]);
+
+
+
+    ngWidgets.directive('ngwTree', function () {
+        return {
+            restrict: 'EA',
+            scope: {
+                model: '=',
+                children: '@',
+                data: '@',
+                highlight: '='
+            },
+            template: '<ngw:table-tree model="model" children="{{children}}" data="{{data}}" highlight="highlight"></ngw:table-tree>'
+        };
+    });
 
 }(angular));
