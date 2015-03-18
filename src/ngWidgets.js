@@ -63,20 +63,25 @@
             };
 
             node.$label = function (emphasis) {
-                if (node.hasOwnProperty(dataProp)) {
-                    var data = this[dataProp], text;
-                    if (angular.isArray(data)) {
-                        data = data[0];
-                    }
-                    text = data; // TODO render(data);
-                    text = highlight(text, emphasis, true);
-                    if (text !== data) {
-                        this.$isHighlighted = true;
-                    } else {
-                        delete this.$isHighlighted;
-                    }
-                    return text;
+              var data = node, text;
+              dataProp.split('.').forEach(function (p) {
+                if (data.hasOwnProperty(p)) {
+                  data = data[p];
+                } else {
+                  throw 'cannot evaluate "' + dataProp + '" on some node';
                 }
+              });
+              if (angular.isArray(data)) {
+                data = data[0];
+              }
+              text = data; // TODO render(data);
+              text = highlight(text, emphasis, true);
+              if (text !== data) {
+                this.$isHighlighted = true;
+              } else {
+                delete this.$isHighlighted;
+              }
+              return text;
             };
 
             node.$toggle = function () {
