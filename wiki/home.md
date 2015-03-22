@@ -1,38 +1,37 @@
 ngWidgets is a collection of reusable UI widgets for AngularJS developers. It comes with a Javascript and a CSS stylesheet you'll have to load in your application:
 
-
 ```html
 <html ng-app="myApp">
     <head>
-        <!-- load the ngWidgets CSS stylesheet -->
+        <!-- link to fontawesome.css -->
         <link rel="stylesheet" href="ngWidgets.min.css" />
     </head>
     <body>
-        <!-- load the ngWidgets Javascript (AFTER AngularJS) -->
+        <!-- load angular.js -->
         <script src="ngWidgets.min.js"></script>
     </body>
 </html>
 ```
 
-It provides the following widgets
+It depends on [FontAwesome](http://fortawesome.github.io/Font-Awesome/) and [AngularJS](https://angularjs.org/) and provides the following widgets:
 
 * ngwTable
 * ngwTree
-* ngwTableTree
+* ngwTreeTable
 
 
 ## Hierarchical widgets
-Hierarchical widgets are those widgets which display hierarchical data such as ngwTree and ngwTableTree. They're all based on a special ngwRepeat directive which, as the [AngularJS ngRepeat directive](https://docs.angularjs.org/api/ng/directive/ngRepeat), instantiates a template once per item from a supplied model.
+Hierarchical widgets are those widgets which display hierarchical data such as ngwTree and ngwTreeTable. They're all based on a special ngwTreeWalker directive which, as the [AngularJS ngRepeat directive](https://docs.angularjs.org/api/ng/directive/ngRepeat), instantiates a template once per item from a supplied model.
 
 ```html
 <table>
     <tr ngw-repeat="node in model">
-        <td>{{node.$label()}}</td>
+        <td>{{node.$render()}}</td>
     </tr>
 </table>
 ```
 
-ngwRepeat assumes that the supplied model represents hierachical data having a ``children`` property owned by each node as an array of children nodes. For example:
+ngwTreeWalker assumes that the supplied model represents hierachical data having a ``children`` property owned by each node as an array of children nodes. For example:
 
 ```javascript
 $scope.model = {
@@ -44,15 +43,15 @@ $scope.model = {
 ]}]}
 ```
 
-ngwRepeat traverses the whole hierarchy using a _depth-first_ traversal algorithm and, at each visit, it transcludes the element on which the directive itself is matched. The cloned element is linked to a new sibling scope which holds the current _"pimped"_ node (enriched with some additional properties as explained below).
+ngwTreeWalker traverses the whole hierarchy using a _depth-first_ traversal algorithm and, at each visit, it transcludes the element on which the directive itself is matched. The cloned element is linked to a new sibling scope which holds the current _"pimped"_ node (enriched with some additional properties as explained below).
 
 
-ngwRepeat accepts the following attributes:
+ngwTreeWalker accepts the following attributes:
 
 * ``children``  
   the property name of the children array (default is _"children"_)
 * ``data``  
-  the property name of the string text being returned by the ``$label()`` function when invoked on the _"pimped"_ node (default is _"data"_)
+  the property name of the data being rendered by the ``$render()`` function when invoked on the _"pimped"_ node (default is _"data"_)
   
 
 Following is an example with a model having property names in _"latin language"_ :
@@ -60,7 +59,7 @@ Following is an example with a model having property names in _"latin language"_
 ```html
 <table>
     <tr ngw-repeat="nodus in lignum" children="natus" data="nomen">
-        <td>{{nodus.$label()}}</td>
+        <td>{{nodus.$render()}}</td>
     </tr>
 </table>
 ```
@@ -76,7 +75,7 @@ $scope.lignum = {
 ```
 
 
-As side effects, ngwRepeat _"pimps"_ (enriches) the supplied model with additional properties. Pimped properties are all prefixed with ``$`` and they will be added on both:
+As side effects, ngwTreeWalker _"pimps"_ (enriches) the supplied model with additional properties. Pimped properties are all prefixed with ``$`` and they will be added on both:
 
 * the model
   * ``$selected`` - the selected node
@@ -100,42 +99,46 @@ As side effects, ngwRepeat _"pimps"_ (enriches) the supplied model with addition
 Following is a complete example:
 
 ```html
-<input ng-model="lignum.emphasis">
-<p>Selected node is: {{lignum.$selected.$label()}}</p>
+<label>model</label>
+<button ng-click="lignum = lignum1">Lignum1</button>
+<button ng-click="lignum = lignum2">Lignum2</button>
+<button ng-click="lignum = lignum3">Lignum3</button>
+<label>emphasis</label>
+<input ng-model="lignum.emphasis" >
+<p>Selected data is: {{lignum.$selected.$data[0]}}</p>
 <table class="table table-tree">
-    <tr>
-      <th></th>
-      <th></th>
-      <th>$label()</th>
-      <th>$parent</th>
-      <th>$isRoot</th>
-      <th>$level</th>
-      <th>$path</th>
-      <th>$isFolder</th>
-      <th>$isOpen</th>
-      <th>$isSelected</th>
-      <th>$isHighlighted</th>
-    </tr>
-    <tr ngw:repeat="nodus in lignum" children="natus" data="nomen">
-      <th class="clickable"><span ng-show="nodus.$isFolder" ng-click="nodus.$toggle()">$toggle()</span></th>
-      <th class="clickable" ng-click="nodus.$select()">$select()</th>
-      <td ng-class="'level'+nodus.$level" ng-bind-html="nodus.$label(lignum.emphasis)"></td>
-      <td>{{nodus.$parent.$label()}}</td>
-      <td>{{nodus.$isRoot}}</td>
-      <td>{{nodus.$level}}</td>
-      <td><span ng-repeat="node in nodus.$path">/{{node.$label()}}</span></td>
-      <td>{{nodus.$isFolder}}</td>
-      <td>{{nodus.$isOpen}}</td>
-      <td>{{nodus.$isSelected}}</td>
-      <td>{{nodus.$isHighlighted}}</td>
-    </tr>
-  </table>  
-  <button ng-click="lignum.$expand()">lignum.$expand()</button>
-  <button ng-click="lignum.$collapse()">lignum.$collapse()</button>
-
+  <tr>
+    <th></th>
+    <th></th>
+    <th>$render()</th>
+    <th>$parent</th>
+    <th>$isRoot</th>
+    <th>$level</th>
+    <th>$path</th>
+    <th>$isFolder</th>
+    <th>$isOpen</th>
+    <th>$isSelected</th>
+    <th>$isHighlighted</th>
+  </tr>
+  <tr ngw:tree-walker="nodus in lignum" children="natus" data="nomen">
+    <th class="clickable"><span ng-show="nodus.$isFolder" ng-click="nodus.$toggle()">$toggle()</span></th>
+    <th class="clickable" ng-click="nodus.$select()">$select()</th>
+    <td ng-class="'level'+nodus.$level" ng-bind-html="nodus.$render(0, lignum.emphasis)"></td>
+    <td>{{nodus.$parent.$data[0]}}</td>
+    <td>{{nodus.$isRoot}}</td>
+    <td>{{nodus.$level}}</td>
+    <td><span ng-repeat="node in nodus.$path">/{{node.$data[0]}}</span></td>
+    <td>{{nodus.$isFolder}}</td>
+    <td>{{nodus.$isOpen}}</td>
+    <td>{{nodus.$isSelected}}</td>
+    <td>{{nodus.$isHighlighted}}</td>
+  </tr>
+</table>
+<button ng-click="lignum.$expand()">lignum.$expand()</button>
+<button ng-click="lignum.$collapse()">lignum.$collapse()</button>
 ```
 
-> If you want to display hierarchical data DO NOT use the ngwRepeat directive. Rather, make use of either ngwTree or ngwTableTree since they provide a good HTML structure and customizable CSS styles.
+> If you want to display hierarchical data DO NOT use the ngwTreeWalker directive. Rather, make use of either ngwTree or ngwTreeTable since they provide a good HTML structure and customizable CSS styles.
 
 
 # ngwTable
@@ -202,11 +205,11 @@ $scope.bratus = {
 ]}]};                
 ```
 
-# ngwTableTree
+# ngwTreeTable
 This directive will display a table tree representation from a supplied data model. A table tree representation is a table having a browsable tree in its first column.
 
 ```html
-<ngw:table-tree model="model"></ngw:table-tree>
+<ngw:tree-table model="model"></ngw:tree-table>
 ```
 
 It assumes the provided model object represents hierachical data having

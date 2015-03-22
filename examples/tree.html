@@ -1,0 +1,19 @@
+<section ng-controller="treeController">
+    <h2>ngwTree</h2>
+    <label>model</label>
+    <button ng-click="bratus = bratus1">Bratus1</button>
+    <button ng-click="bratus = bratus2">Bratus2</button>
+    <button ng-click="bratus = bratus3">Bratus3</button>
+    <label>emphasis</label>
+    <input ng-model="bratus.emphasis" >
+    <p>Selected data is: {{bratus.emphasis}}</p>
+    <div ngw:tree
+            model="bratus"
+            name="nomen"
+            children="natus"
+            highlight="bratus.emphasis"
+            ></div>
+    <button ng-click="bratus.$expand()">bratus.$expand()</button>
+    <button ng-click="bratus.$collapse()">bratus.$collapse()</button>
+</section>
+<hr>

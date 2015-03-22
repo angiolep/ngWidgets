@@ -4,7 +4,7 @@ A collection of reusable UI widgets for AngularJS developers.
 Most remarkable widgets are those displaying hierarchical data, such as table trees. For example:
 
 ```html
-<ngw:table-tree model="model"></ngw:table-tree>
+<ngw:tree-table model="model"></ngw:tree-table>
 ```
 
 which assumes the following data model in scope:

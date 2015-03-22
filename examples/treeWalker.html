@@ -1,0 +1,29 @@
+<section controller="treeWalkerController">
+    <h2>ngwTreeWalker</h2>
+    <label>model</label>
+    <button ng-click="lignum = lignum1">Lignum1</button>
+    <button ng-click="lignum = lignum2">Lignum2</button>
+    <button ng-click="lignum = lignum3">Lignum3</button>
+    <label>emphasis</label>
+    <input ng-model="lignum.emphasis" >
+    <table class="table table-tree">
+        <tr>
+            <th>$name</th>
+            <th>$parent</th>
+            <th>$isRoot</th>
+            <th>$level</th>
+            <th>$path</th>
+            <th>$isFolder</th>
+            <th>$isHighlighted</th>
+        </tr>
+        <tr ngw:tree-walker="nodus in lignum" name="nomen" children="natus" data="nomen">
+            <td ng-class="'level'+nodus.$level" ng-bind-html="nodus.$highlight(lignum.emphasis)"></td>
+            <td>{{nodus.$parent.$name}}</td>
+            <td>{{nodus.$isRoot}}</td>
+            <td>{{nodus.$level}}</td>
+            <td><span ng-repeat="node in nodus.$path">/{{node.$name}}</span></td>
+            <td>{{nodus.$isFolder}}</td>
+            <td>{{nodus.$isHighlighted}}</td>
+        </tr>
+    </table>
+</section>
