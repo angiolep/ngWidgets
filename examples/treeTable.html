@@ -1,24 +1,17 @@
 
 <section ng-controller="treeTableController">
     <h2>ngwTreeTable</h2>
-    <label>model</label>
-    <button ng-click="arbor = arbor1">Arbor1</button>
-    <button ng-click="arbor = arbor2">Arbor2</button>
-    <button ng-click="arbor = arbor3">Arbor3</button>
-    <br>
-    <label>emphasis</label>
-    <input ng-model="arbor.emphasis">
-    <br>
-    <button ng-click="arbor.$expand()">arbor.$expand()</button>
-    <button ng-click="arbor.$collapse()">arbor.$collapse()</button>
     <div ngw:tree-table
          model="arbor"
          children="natus"
          name="nomen"
-         headers="cognomen,nativitate"
+         headers="caput"
          data="arca"
-         highlight="arbor.emphasis"
     ></div>
+    <label>model</label>
+    <button ng-click="arbor = arbor1">Arbor1</button>
+    <button ng-click="arbor = arbor2">Arbor2</button>
+    <button ng-click="arbor = arbor3">Arbor3</button>
     <p>Selected data is: {{arbor.$selected.$name}}</p>
 
     <!--<h2>ngwTreeTable - nested data</h2>
