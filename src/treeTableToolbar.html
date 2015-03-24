@@ -1,0 +1,17 @@
+<div class="toolbar pull-right">
+  <button ng-click="toolbar.filter.apply(toolbar.filter.text)"
+      class="btn btn-xs btn-default" ng-class="{'btn-danger': toolbar.filter.state}"
+      title="Filter by the supplied text">
+    <i class="fa fa-filter"></i></button>
+  <input type="text" ng-model="toolbar.filter.text">
+  <button ng-click="toolbar.collapse()"
+      class="btn btn-xs btn-default"
+      title="Collapse all levels">
+    <i class="fa fa-compress"></i>
+  </button>
+  <button ng-click="toolbar.expand()"
+      class="btn btn-xs btn-default"
+      title="Expand to selected level">
+    <i class="fa fa-expand"></i>
+  </button>
+</div>

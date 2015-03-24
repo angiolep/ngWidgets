@@ -3,148 +3,127 @@
 @lightGray: #eee;
 
 
-.icon {
-  display: inline-block;
-  font: normal normal normal 14px/1 FontAwesome;
-  font-size: inherit;
-  text-rendering: auto;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  transform: translate(0, 0);
-}
-
-.icon-leaf {
-  color: @mediumGray;
-  &:extend(.icon);
-}
-.icon-folder-close {
-  &:extend(.icon);
-}
-.icon-folder-open {
-  &:extend(.icon);
-}
-
-.icon-leaf:before {
-  content:"\f10c";
-}
-.icon-folder-close:before {
-  content:"\f114";
-}
-.icon-folder-open:before {
-  content:"\f115";
-}
-
-.icon-folder-close:hover {
-  cursor: zoom-in;
-}
-.icon-folder-open:hover {
-  cursor: zoom-out;
-}
-
-
-.branch {
-  position: relative;
-
-  &::before, &::after {
-    content: '';
-    left: -10px;
-    position: absolute;
-    right: auto;
-  }
-
-  &::before {
-    border-left: 1px solid #bbbbbb;
-    bottom: 0;
-    height: 32px;
-    top: -7px;
-    width: 0;
-  }
-
-  &::after {
-    border-top: 1px solid #bbbbbb;
-    /* height: 0; */
-    top: 8px;
-    width: 10px;
-  }
-}
-
-.emphasis {
-  background: yellow;
-}
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-.clickable:hover {
-  background-color: @mediumGray;
-  color: black;
-  cursor: pointer;
-}
-
-.selected {
-  background: @darkGray;
-}
-
-
-
-.table {
-  margin: 4px 0;
+.ngw-table {
+  width: 100%;
+  margin: 0;
+  border-spacing: 0;
   border-collapse: collapse;
+  th {
+    border-bottom: 2px solid @lightGray;
+  }
   th, td {
     margin: 0;
-    padding: 4px;
+    padding: 8px;
   }
-  th {
-    border: 1px solid @mediumGray;
-    background: @lightGray;
+  td {
+
   }
-}
-
-
-.tree {
-  padding: 0 20px;
-  li {
-    list-style-type: none;
-    padding: 2px;
-  }
-}
-
-
-.table-tree {
-
-  tr.hidden {
-    display: none!important;
-    visibility: hidden!important;
-  }
-
   tr:hover {
     background: @lightGray;
-    color: black;
   }
-
-  td {
-    vertical-align: middle!important;;
-    border-right: 1px solid @lightGray;
-  }
-
-  td.level0 {
-    padding-left: 12px;
-  }
-  td.level1 {
-    padding-left: 32px;
-  }
-  td.level2 {
-    padding-left: 52px;
-  }
-  td.level3 {
-    padding-left: 72px;
-  }
-  td.level4 {
-    padding-left: 92px;
-  }
-  td.level5 {
-    padding-left: 112px;
+  tr.selected {
+    background: darken(@lightGray, 10%);
   }
 }
 
 
+
+.ngw-tree-table {
+  table-layout: fixed;
+
+  tr.hidden {
+    display: none;
+    visibility: hidden;
+  }
+
+  th:first-child {
+    /*width: 50%;*/
+    border-bottom: 1px solid @lightGray;
+  }
+
+  td:first-child {
+    /*font-size: 11px;*/
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    .selectable:hover {
+      background-color: @mediumGray;
+      cursor: pointer;
+    }
+    .emphasis {
+      background: yellow;
+    }
+
+    .icon {
+      display: inline-block;
+      //  font: normal normal normal 14px/1 FontAwesome;
+      font-size: inherit;
+      text-rendering: auto;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      /*transform: translate(0, 0);*/
+      transform: scale(1);
+    }
+    .icon:hover {
+      cursor: pointer;
+      transform: scale(1.25);
+    }
+
+    .icon-leaf {
+      color: @mediumGray;
+      &:extend(.icon);
+    }
+    .icon-folder-close {
+      &:extend(.icon);
+    }
+    .icon-folder-open {
+      &:extend(.icon);
+    }
+
+    .icon-leaf:before {
+      //  content:"\f10c"; // FontAwesome
+      content:"\0000";
+    }
+    .icon-folder-close:before {
+      //  content:"\f114"; // FontAwesome
+      content:"\25b6";
+    }
+    .icon-folder-open:before {
+      //  content:"\f115"; // FontAwesome
+      content:"\25bc";
+    }
+  }
+
+  td.cell {
+    vertical-align: middle;
+    border-bottom: 1px solid @lightGray;
+  }
+
+  td.cell-default {
+  }
+
+  td.cell-warning {
+    background: red;
+  }
+
+  // TODO move level classes inside some other selectpr (but which one?)
+  .level-0 {
+    padding-left: 8px;
+  }
+  .level-1 {
+    padding-left: 24px;
+  }
+  .level-2 {
+    padding-left: 40px;
+  }
+  .level-3 {
+    padding-left: 56px;
+  }
+  .level-4 {
+    padding-left: 72px;
+  }
+  .level-5 {
+    padding-left: 98px;
+  }
+}

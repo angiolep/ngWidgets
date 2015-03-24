@@ -1,51 +1,62 @@
+<section ng-controller="treeTableController" ng-init="arbor = arbor1">
 
-<section ng-controller="treeTableController">
-    <h2>ngwTreeTable</h2>
-    <div ngw:tree-table
-         model="arbor"
-         children="natus"
-         name="nomen"
-         headers="caput"
-         data="arca"
-    ></div>
-    <label>model</label>
-    <button ng-click="arbor = arbor1">Arbor1</button>
-    <button ng-click="arbor = arbor2">Arbor2</button>
-    <button ng-click="arbor = arbor3">Arbor3</button>
-    <p>Selected data is: {{arbor.$selected.$name}}</p>
+  <div class="btn btn-group pull-right">
+    <button class="btn btn-default" ng-click="arbor = arbor1">Arbor1</button>
+    <button class="btn btn-default" ng-click="arbor = arbor2">Arbor2</button>
+    <button class="btn btn-default" ng-click="arbor = arbor3">Arbor3</button>
+  </div>
 
-    <!--<h2>ngwTreeTable - nested data</h2>
-    <label>model</label>
-    <button disabled>Arbor4</button>
-    <label>emphasis</label>
-    <input ng-model="arbor4.emphasis">
-    <p>Selected data is: {{arbor4.$selected.$data[0]}}</p>
-    <div ngw:tree-table
-            model="arbor4"
-            headers="caput"
-            children="natus"
-            data="bonum.arca"
-            highlight="arbor4.emphasis"
-            ></div>
-    <button ng-click="arbor4.$expand()">arbor.$expand()</button>
-    <button ng-click="arbor4.$collapse()">arbor.$collapse()</button>-->
+  <h2>ngwTreeTable</h2>
+
+  <div class="panel panel-default" style="margin-top: 48px">
+    <div class="panel-heading">
+      <div ngw:toolbar for="mywidget" class="pull-right"></div>
+      <h3 class="panel-title">{{arbor.id}}</h3>
+    </div>
+    <div class="panel-body">
+      <div ngw:tree-table
+           id="mywidget"
+           model="arbor"
+           children="natus"
+           name="nomen"
+           headers="caput"
+           data="arca"
+          ></div>
+    </div>
+  </div>
+  <p>Selected data is: {{arbor.$selected.$name}}</p>
+
+  <!--<h2>ngwTreeTable - nested data</h2>
+  <label>model</label>
+  <button disabled>Arbor4</button>
+  <label>emphasis</label>
+  <input ng-model="arbor4.emphasis">
+  <p>Selected data is: {{arbor4.$selected.$data[0]}}</p>
+  <div ngw:tree-table
+          model="arbor4"
+          headers="caput"
+          children="natus"
+          data="bonum.arca"
+          highlight="arbor4.emphasis"
+          ></div>
+  <button ng-click="arbor4.$expand()">arbor.$expand()</button>
+  <button ng-click="arbor4.$collapse()">arbor.$collapse()</button>-->
 
 
-
-    <!--<h2>ngwTreeTable - custom renderer</h2>
-    <label>model</label>
-    <button disabled>Arbor5</button>
-    <label>emphasis</label>
-    <input ng-model="arbor5.emphasis">
-    <p>Selected data is: {{arbor5.$selected.$data[0]}}</p>
-    <div ngw:tree-table
-        model="arbor5"
-        headers="caput"
-        renderer="renderer"
-        children="natus"
-        data="bonum.arca"
-        highlight="arbor5.emphasis"
-        ></div>
-    <button ng-click="arbor5.$expand()">arbor.$expand()</button>
-    <button ng-click="arbor5.$collapse()">arbor.$collapse()</button>-->
+  <!--<h2>ngwTreeTable - custom renderer</h2>
+  <label>model</label>
+  <button disabled>Arbor5</button>
+  <label>emphasis</label>
+  <input ng-model="arbor5.emphasis">
+  <p>Selected data is: {{arbor5.$selected.$data[0]}}</p>
+  <div ngw:tree-table
+      model="arbor5"
+      headers="caput"
+      renderer="renderer"
+      children="natus"
+      data="bonum.arca"
+      highlight="arbor5.emphasis"
+      ></div>
+  <button ng-click="arbor5.$expand()">arbor.$expand()</button>
+  <button ng-click="arbor5.$collapse()">arbor.$collapse()</button>-->
 </section>

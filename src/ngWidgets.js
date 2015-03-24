@@ -2,9 +2,7 @@
 (function () {
   'use strict';
 
-  var ngWidgets = angular.module('ngWidgets', []),
-
-    evaluate = function (context, expr) {
+  var evaluate = function (context, expr) {
       var recurse = function (context, splitted) {
         if (splitted.length > 0) {
           var path = splitted[0];
@@ -62,36 +60,34 @@
       }
     },
 
-
     pimp = function (model, node, nameProp, childrenProp, dataProp) {
 
       (function pimpModel() {
         if (!model.$pimped) {
-          model.$deep = 0;
+          model.$depth = 0;
           model.$children = model[childrenProp];
 
           model.$select = function (path) {
             var route = function (node, path) {
-              var k, result,
-                children = node.$children,
-                p = path[0];
-              if (p) {
-                for (k = 0; k < children.length; k = k + 1) {
-                  if (children[k].$name === p.$name) {
-                    result = children[k];
-                    return route(result, path.slice(1));
+                var k, result,
+                  children = node.$children,
+                  p = path[0];
+                if (p) {
+                  for (k = 0; k < children.length; k = k + 1) {
+                    if (children[k].$name === p.$name) {
+                      result = children[k];
+                      return route(result, path.slice(1));
+                    }
                   }
+                } else {
+                  return node;
                 }
-              } else {
-                return node;
-              }
-            },
+              },
               n = route(model, path);
             if (n) {
               n.$select();
             }
           };
-
 
           model.$pathString = function (node) {
             if (node) {
@@ -99,7 +95,7 @@
             }
           };
 
-          model.$collapse = function (level) {
+          model.$collapse = function () {
             walk(model, childrenProp, function (node) {
               delete node.$isOpen;
             });
@@ -108,6 +104,7 @@
           model.$expand = function (level) {
             walk(model, childrenProp, function (node) {
               delete node.$isOpen;
+
               if (node.$isFolder && node.$level < level) {
                 node.$isOpen = true;
               }
@@ -133,6 +130,7 @@
           };
 
           node.$toggle = function () {
+            // TODO update the toolbar.level accordingly
             if (this.$isFolder) {
               if (this.$isOpen) {
                 delete this.$isOpen;
@@ -172,13 +170,13 @@
             }
             node.$path = path.reverse();
             node.$level = level;
-            if (model.$deep < level) {
-              model.$deep = level;
+            if (model.$depth < level) {
+              model.$depth = level;
             }
             node.$isFolder = node.$children && node.$children.length > 0;
-            if (node.$isFolder) {
+            /*if (node.$isFolder) {
               node.$isOpen = true;
-            }
+            }*/
             if (dataProp) {
               node.$data = evaluate(node, dataProp);
             }
@@ -187,7 +185,9 @@
         }
       }());
       return node;
-    };
+    },
+
+    ngWidgets = angular.module('ngWidgets', []);
 
 
   ngWidgets.directive('ngwTreeWalker', ['$compile', function ($compile) {
@@ -254,16 +254,18 @@
         };
       }
     };
-  }]);
+  }])
 
 
-
-  ngWidgets.directive('ngwTreeTable', ['$parse', '$compile', function ($parse, $compile) {
+    .directive('ngwTreeTable', ['$parse', '$compile', function ($parse, $compile) {
     return {
       restrict: 'A',
       scope: {
         model: '=',
-        render: '&'
+        cellStyle: '&',
+        cellClass: '&',
+        cellContent: '&',
+        highlight: '='
       },
       compile: function ngwTreeTableCompile(tElement, tAttrs) {
         var nameProp = tAttrs.name || 'name',
@@ -279,23 +281,22 @@
           var k, toolbar, table, thead, tbody,
             oldScopes = [];
 
-          toolbar = angular.element('<div class="toolbar">' +
-            ' <button ng-click="toolbar.filter.apply(toolbar.filter.value)" class="btn btn-default" ng-class="{\'btn-on\': toolbar.filter.state}" title="Filter by the supplied text"><i class="fa fa-filter"></i></button>' +
-            ' <input type="text" ng-model="toolbar.filter.value">' +
-            ' <button ng-click="model.$collapse()" class="btn btn-default" title="Collapse all levels"><i class="fa fa-compress"></i></button>' +
-            ' <button ng-click="model.$expand(toolbar.level)" class="btn btn-default" title="Expand to selected level"><i class="fa fa-expand"></i></button>' +
-            ' <input type="number" ng-model="toolbar.level">' +
-            '</div>'
-            );
-          table = angular.element('<table class="table table-tree">' +
-            ' <thead></thead><tbody></tbody>' +
-            '</table>'
+          /*toolbar = angular.element('<div class="toolbar">' +
+              ' <button ng-click="toolbar.filter.apply(toolbar.filter.value)" class="btn btn-xs btn-default" ng-class="{\'btn-on\': toolbar.filter.state}" title="Filter by the supplied text"><i class="fa fa-filter"></i></button>' +
+              ' <input type="text" ng-model="toolbar.filter.value">' +
+              ' <button ng-click="toolbar.collapse()" class="btn btn-xs btn-default" title="Collapse all levels"><i class="fa fa-compress"></i></button>' +
+              ' <button ng-click="toolbar.expand()" class="btn btn-xs btn-default" title="Expand to selected level"><i class="fa fa-expand"></i></button>' +
+              '</div>'
+            );*/
+          table = angular.element('<table class="ngw-table ngw-tree-table">' +
+              ' <thead></thead><tbody></tbody>' +
+              '</table>'
             );
           thead = table.find('thead');
           tbody = table.find('tbody');
 
           scope.$watch(function (scope) { return scope.model; }, function (newModel, oldModel) {
-            var headers, th, trTpl, defaultRenderFn;
+            var headers, th, trTpl;
             if (newModel) {
               // dispose old scopes
               while (oldScopes.length > 0) {
@@ -307,17 +308,34 @@
               tbody.html('');
 
               // define tools behavior and state
-              scope.toolbar = {
+              /*scope.toolbar = {
+                level: 0,
+                expand: function () {
+                  this.level = this.level + 1;
+                  // cap this.level to model depth
+                  if (this.level > newModel.$depth) {
+                    this.level = newModel.$depth;
+                  }
+                  newModel.$expand(this.level);
+                },
+                collapse: function () {
+                  this.level = this.level - 1;
+                  // cap this.level to 0
+                  if (this.level < 0) {
+                    this.level = 0;
+                  }
+                  newModel.$expand(this.level);
+                },
                 filter: {
-                  apply: function (value) {
+                  apply: function () {
                     this.state = !this.state;
-                    // TODO newModel.$filter(value);
+                    // TODO newModel.$filter(this.value);
                   }
                 }
-              };
+              };*/
 
               // append both the toolbar and table once they're linked to a new child scope
-              iElement.append($compile(toolbar)(scope));
+              // iElement.append($compile(toolbar)(scope));
               iElement.append($compile(table)(scope));
 
               // get the headers array and create the thead template contents
@@ -332,23 +350,17 @@
 
               trTpl =
                 '  <tr>' +
-                '    <td ng-class="\'level\'+node.$level">' +
-                '      <div class="branch">' +
-                '        <icon ng-click="node.$toggle()" ng-class="{\'icon-leaf\': !node.$isFolder, \'icon-folder-close\': node.$isFolder && !node.$isOpen, \'icon-folder-open\': node.$isFolder && node.$isOpen}"></icon>' +
-                '        <span ng-click="node.$select()" class="clickable" ng-bind-html="node.$highlight(toolbar.filter.value)"></span>' +
-                '      </div>' +
+                '    <td class="level" ng-class="\'level-\'+node.$level">' +
+                '        <icon ng-click="node.$toggle()" class="icon" ng-class="{\'icon-leaf\': !node.$isFolder, \'icon-folder-close\': node.$isFolder && !node.$isOpen, \'icon-folder-open\': node.$isFolder && node.$isOpen}"></icon>' +
+                '        <span ng-click="node.$select()" class="selectable" ng-bind-html="node.$highlight(highlight)"></span>' +
                 '    </td>';
               for (k = 0; k < headers.length; k = k + 1) {
                 trTpl +=
-                  '  <td>' +
-                  '    <span ng-bind-html="renderCell(' + k + ')"></span>' +
+                  '  <td class="cell" ng-class="cellClassOf(' + k + ')" ng-style="cellStyleOf(' + k + ')">' +
+                  '    <span ng-bind-html="cellContentOf(' + k + ')"></span>' +
                   '  </td>';
               }
               trTpl += '</tr>';
-
-              defaultRenderFn = function (node, index) {
-                return node.$data[index];
-              };
 
               // walk the hierachical data to visit each node
               walk(newModel, childrenProp, function visit(node) {
@@ -364,9 +376,17 @@
                 // create a new child scope and add the pimped node
                 trScope = scope.$new();
                 trScope.node = node;
-                trScope.renderCell = function (index) {
-                  var renderFn = trScope.render() || defaultRenderFn;
-                  return renderFn(node, index);
+                trScope.cellClassOf = function (index) {
+                  var cellClassOf = trScope.cellClass() || function (node, index) { return 'cell-default'; };
+                  return cellClassOf(node, index);
+                };
+                trScope.cellStyleOf = function (index) {
+                  var cellStyleOf = trScope.cellStyle() || function (node, index) { return {}; };
+                  return cellStyleOf(node, index);
+                };
+                trScope.cellContentOf = function (index) {
+                  var cellContentOf = trScope.cellContent() || function (node, index) { return node.$data[index]; };
+                  return cellContentOf(node, index);
                 };
 
                 // store the newly created scope for later disposal
@@ -389,30 +409,90 @@
         };
       }
     };
-  }]);
+  }])
 
 
-  /*ngWidgets.directive('ngwTree', function ($compile) {
-   return {
-   restrict: 'A',
-   scope: {
-   model: '=',
-   name: '@',
-   children: '@',
-   // TODO hideHeaders: '@',
-   // TODO maxDepth: '@',
-   highlight: '='
-   },
-   link: function (scope, element, attrs) {
-   var template = '<div ngw:tree-table model="model" name="' + scope.name + '" children="' + scope.children + '" highlight="highlight"></div>';
-   element.html('').append(template);
-   $compile(template)(scope);
-   }
-   };
-   });*/
+    .directive('ngwToolbar', ['$compile', function ($compile) {
+    return {
+      restrict: 'A',
+      scope: {
+        for: '@'
+      },
+      link: function (scope, iElement, iAttrs) {
+        var el, tableTree, modelProp, template;
+        if (scope.for) {
+          el = document.querySelector('#' + scope.for);
+          if (el) {
+            tableTree = angular.element(el);
+            modelProp = tableTree.attr('model');
+            if (modelProp) {
+              scope.model = tableTree.scope()[modelProp];
+
+              // TODO scope.$watch(model, ...
+              scope.toolbar = {
+                level: 0,
+                expand: function () {
+                  this.level = this.level + 1;
+                  // cap this.level to model depth
+                  if (this.level > scope.model.$depth) {
+                    this.level = scope.model.$depth;
+                  }
+                  scope.model.$expand(this.level);
+                },
+                collapse: function () {
+                  this.level = this.level - 1;
+                  // cap this.level to 0
+                  if (this.level < 0) {
+                    this.level = 0;
+                  }
+                  scope.model.$expand(this.level);
+                },
+                filter: {
+                  // text
+                  apply: function () {
+                    this.state = !this.state;
+                    scope.model.$filter(this.text);
+                  }
+                }
+              };
+
+              template = '<div class="ngw-toolbar">' +
+                '<button ng-click="toolbar.filter.apply(toolbar.filter.text)" ' +
+                '    class="ngw-tool" ng-class="{\'ngw-tool-selected\': toolbar.filter.state}"' +
+                '    title="Filter by the supplied text">' +
+                '  <i class="fa fa-filter"></i></button>' +
+                '</div>';
+
+              iElement.html('').append($compile(template)(scope));
+            }
+          }
+        }
+      }
+    };
+  }])
 
 
-  ngWidgets.directive('ngwTreeMap', function ($timeout) {
+     /*.directive('ngwTree', function ($compile) {
+     return {
+     restrict: 'A',
+     scope: {
+     model: '=',
+     name: '@',
+     children: '@',
+     // TODO hideHeaders: '@',
+     // TODO maxDepth: '@',
+     highlight: '='
+     },
+     link: function (scope, element, attrs) {
+     var template = '<div ngw:tree-table model="model" name="' + scope.name + '" children="' + scope.children + '" highlight="highlight"></div>';
+     element.html('').append(template);
+     $compile(template)(scope);
+     }
+     };
+     });*/
+
+
+    .directive('ngwTreeMap', function ($timeout) {
     return {
       restrict: 'A',
       scope: {
@@ -630,6 +710,13 @@
           };
         };
       }
+    };
+  })
+
+
+    .factory('ngwModelService', function () {
+    return {
+      walk : walk
     };
   });
 }());
