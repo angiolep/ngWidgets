@@ -44,7 +44,7 @@
               nomen: 'nomen23',
               arca: ['cognomen23', 'nativitate23']
             }, {
-              nomen: 'nomen14',
+              nomen: 'nomen24',
               arca: ['cognomen24', 'nativitate24'],
               natus: []
             }]

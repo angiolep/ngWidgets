@@ -6,9 +6,32 @@
     <button class="btn btn-default" ng-click="arbor = arbor3">Arbor3</button>
   </div>
 
-  <h2>ngwTreeTable</h2>
+  <h2 style="margin-bottom: 32px">ngwTreeTable</h2>
 
-  <div class="panel panel-default" style="margin-top: 48px">
+  <div class="well">
+    <table class="table">
+      <tr>
+        <th>$name</th>
+        <th>$parent</th>
+        <th>$isRoot</th>
+        <th>$level</th>
+        <th>$isFolder</th>
+        <th>$isOpen</th>
+        <th>$isHighlighted</th>
+      </tr>
+      <tr>
+        <td>{{arbor.$selected.$name}}</td>
+        <td>{{arbor.$selected.$parent.$name}}</td>
+        <td>{{arbor.$selected.$isRoot}}</td>
+        <td>{{arbor.$selected.$level}}</td>
+        <td>{{arbor.$selected.$isFolder}}</td>
+        <td>{{arbor.$selected.$isOpen}}</td>
+        <td>{{arbor.$selected.$isHighlighted}}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="panel panel-default" >
     <div class="panel-heading">
       <div ngw:toolbar for="mywidget" class="pull-right"></div>
       <h3 class="panel-title">{{arbor.id}}</h3>
@@ -24,7 +47,8 @@
           ></div>
     </div>
   </div>
-  <p>Selected data is: {{arbor.$selected.$name}}</p>
+
+
 
   <!--<h2>ngwTreeTable - nested data</h2>
   <label>model</label>

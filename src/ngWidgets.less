@@ -2,6 +2,101 @@
 @mediumGray: #bbb;
 @lightGray: #eee;
 
+// TODO move icons definition to a separate ngWidgets-icons.less
+
+.ngw-icon {
+  display: inline-block;
+  //  font: normal normal normal 14px/1 FontAwesome;
+  font: normal normal normal 14px/1 courier;
+  font-size: inherit;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /*transform: translate(0, 0);*/
+}
+
+.ngw-icon-leaf {
+  &:extend(.ngw-icon);
+}
+.ngw-icon-leaf:before {
+  //  content:"\f10c"; // FontAwesome
+  content:"\25b6";
+  opacity: 0;
+}
+
+.ngw-icon-folder-close {
+  &:extend(.ngw-icon);
+}
+.ngw-icon-folder-close:before {
+  //  content:"\f114"; // FontAwesome
+  content:"\25b6";
+}
+
+.ngw-icon-folder-open {
+  &:extend(.ngw-icon);
+}
+.ngw-icon-folder-open:before {
+  //  content:"\f115"; // FontAwesome
+  content:"\25bc";
+}
+
+.ngw-icon-filter {
+  &:extend(.ngw-icon);
+}
+.ngw-icon-filter:before {
+  //  content:"\f0b0"; // FontAwesome
+  content:"\02207";
+}
+
+.ngw-icon-collapse {
+  &:extend(.ngw-icon);
+}
+.ngw-icon-collapse:before {
+  //  content:"\f066"; // FontAwesome
+  content:"\2D";
+}
+
+.ngw-icon-expand {
+  &:extend(.ngw-icon);
+}
+.ngw-icon-expand:before {
+  //  content:"\f066"; // FontAwesome
+  content:"\2B";
+}
+
+
+.ngw-tool {
+  display: inline-block;
+  margin: 0;
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  background-image: none;
+  /*border: 1px solid transparent;*/
+  border: 1px solid red;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  padding: 0px 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 3px;
+}
+
+.ngw-tool:hover {
+  background: @mediumGray;
+  border-color: @darkGray;
+}
+
+.ngw-tool-default {
+  color: #333;
+  background-color: #fff;
+  border-color: #ccc;
+}
+
 
 .ngw-table {
   width: 100%;
@@ -38,7 +133,6 @@
 
   th:first-child {
     /*width: 50%;*/
-    border-bottom: 1px solid @lightGray;
   }
 
   td:first-child {
@@ -47,51 +141,12 @@
     white-space: nowrap;
     text-overflow: ellipsis;
 
-    .selectable:hover {
+    span:hover {
       background-color: @mediumGray;
       cursor: pointer;
     }
     .emphasis {
       background: yellow;
-    }
-
-    .icon {
-      display: inline-block;
-      //  font: normal normal normal 14px/1 FontAwesome;
-      font-size: inherit;
-      text-rendering: auto;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      /*transform: translate(0, 0);*/
-      transform: scale(1);
-    }
-    .icon:hover {
-      cursor: pointer;
-      transform: scale(1.25);
-    }
-
-    .icon-leaf {
-      color: @mediumGray;
-      &:extend(.icon);
-    }
-    .icon-folder-close {
-      &:extend(.icon);
-    }
-    .icon-folder-open {
-      &:extend(.icon);
-    }
-
-    .icon-leaf:before {
-      //  content:"\f10c"; // FontAwesome
-      content:"\0000";
-    }
-    .icon-folder-close:before {
-      //  content:"\f114"; // FontAwesome
-      content:"\25b6";
-    }
-    .icon-folder-open:before {
-      //  content:"\f115"; // FontAwesome
-      content:"\25bc";
     }
   }
 
@@ -125,5 +180,50 @@
   }
   .level-5 {
     padding-left: 98px;
+  }
+}
+
+
+
+
+.ngw-tree-map {
+  background: rgb(185, 205, 229);
+
+  rect {
+    fill: none;
+    stroke: white;
+  }
+
+  text {
+    pointer-events: none;
+  }
+
+  .head {
+    rect {
+      cursor: zoom-out;
+      fill: rgb(34, 62, 110); /*@darkblue*/
+      stroke-width: 2px;
+    }
+    rect:hover {
+      fill: rgb(0, 136, 204); /*@mediumBlue*/
+    }
+    text {
+      font-weight: bold;
+      fill: #fff;
+    }
+  }
+  .body {
+    .children rect.child {
+      cursor: zoom-in;
+      fill: #bbb;
+      fill-opacity: .5;
+    }
+    .children:hover rect.nephew {
+      fill: rgb(0, 136, 204); /*@mediumBlue*/
+    }
+    .leaf rect.child  {
+      cursor: pointer;
+      stroke-width: 2px;
+    }
   }
 }

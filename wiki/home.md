@@ -1,4 +1,5 @@
-ngWidgets is a collection of reusable UI widgets for AngularJS developers. It comes with a Javascript and a CSS stylesheet you'll have to load in your application:
+ngWidgets is a collection of reusable UI widgets for AngularJS developers. 
+It comes with a Javascript and a CSS stylesheet you'll have to load in your application:
 
 ```html
 <html ng-app="myApp">
